@@ -19,10 +19,10 @@ const App = () => {
  
 
   return (
-    <div className={`min-h-screen  ${theme === "light" ? 'bg-white text-black' : 'bg-black text-white'}`}>
+    <div className={`min-h-screen px-12 mx-auto ${theme === "light" ? 'bg-white text-black' : 'bg-black text-white'}`}>
       <header className="p-4">
         <Navbar />
-        <p>{theme}</p>
+        {/* <p>{theme}</p> */}
       </header>
       <Routes>
         <Route path="/" element={<Home />} />

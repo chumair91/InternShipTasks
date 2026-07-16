@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import GitUserCard from '../components/GitUserCard';
+import useDebounce from '../../../Blog/src/hooks/useDebounce';
 
 const DebouncedGitHubUserSearch = () => {
 
 
     const [username, setUsername] = useState("");
-    const [debusername, setDebusername] = useState("");
+    const debusername = useDebounce(username, 500);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState("")
 
@@ -23,19 +24,17 @@ const DebouncedGitHubUserSearch = () => {
         } catch (error) {
             console.log(error);
             setLoading(false)
-
         }
-
     }
 
-    useEffect(() => {
-        const id = setTimeout(() => {
-            setDebusername(username);
-        }, 500)
-        return () => {
-            clearTimeout(id);
-        }
-    }, [username])
+    // useEffect(() => {
+    //     const id = setTimeout(() => {
+    //         setDebusername(username);
+    //     }, 500)
+    //     return () => {
+    //         clearTimeout(id);
+    //     }
+    // }, [username])
 
     useEffect(() => {
         if (!debusername) {
@@ -64,7 +63,7 @@ const DebouncedGitHubUserSearch = () => {
     }
     return (
         <div className=" min-h-screen flex flex-col justify-center items-center">
-            <div  className="flex flex-col justify-center items-center gap-2">
+            <div className="flex flex-col justify-center items-center gap-2">
                 <label htmlFor="userInput">Search a Github User by username</label>
                 <input className="border px-3 py-2" id="userInput" type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
 

@@ -1,17 +1,17 @@
-import { createContext, useEffect, useState } from "react"
+import { createContext } from "react"
+import useLocalStorage from "../hooks/useLocalStorage";
 
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const themeContext = createContext();
 const ThemeProvider = ({ children }) => {
-    const [theme, setTheme] = useState(()=>localStorage.getItem("theme") || "dark");
+    // const [theme, setTheme] = useState(()=>localStorage.getItem("theme") || "dark");
+   const [theme, setTheme] = useLocalStorage("theme", "light");
     const toggleTheme = () => {
         setTheme(prev => prev === "light" ? "dark" : "light")
     }
 
-    useEffect(() => {
-        localStorage.setItem("theme",theme);
-    }, [theme])
+
     return (
         <themeContext.Provider value={{ theme,  toggleTheme }}>
             {children}
