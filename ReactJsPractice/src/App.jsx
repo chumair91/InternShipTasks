@@ -15,6 +15,10 @@ import Task4Home from './task4/Task4Home'
 import Task6Home from './task6/Task6Home'
 import ProfileList from './components/ProfileList'
 import Cart from './components/Cart'
+import GithubUserSearch from './task6/GithubUserSearch'
+import DebouncedGitHubUserSearch from './task6/DebouncedGitHubUserSearch'
+import Task7Home from './task7/Task7Home'
+import MultiStepForm from './task7/MultiStepForm'
 
 const Home = () => {
   return (
@@ -31,6 +35,7 @@ const Home = () => {
           <li className='bg-black px-6 py-2 text-lg  text-white'><Link to="/task4">Task 4</Link></li>
           <li className='bg-black px-6 py-2 text-lg  text-white'><Link to="/task5">Task 5</Link></li>
           <li className='bg-black px-6 py-2 text-lg  text-white'><Link to="/task6">Task 6</Link></li>
+          <li className='bg-black px-6 py-2 text-lg  text-white'><Link to="/task7">Task 7</Link></li>
 
         </ul>
 
@@ -60,6 +65,10 @@ const App = () => {
         <Route path="/task6" element={<Task6Home />} />
         <Route path="/task6/profilelist" element={<ProfileList />} />
         <Route path="/task6/shoppingcart" element={<Cart />} />
+        <Route path="/task6/githubusersearch" element={<GithubUserSearch />} />
+        <Route path="/task6/debgithubusersearch" element={<DebouncedGitHubUserSearch />} />
+        <Route path="/task7" element={<Task7Home />} />
+        <Route path="/task7/multistepform" element={<MultiStepForm />} />
 
       </Routes>
     </div>
