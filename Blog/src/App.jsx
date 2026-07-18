@@ -9,6 +9,7 @@ import { themeContext } from "./context/ThemeContext"
 import Proxy from "./pages/Proxy"
 import Login from "./pages/Login"
 import { authContext } from "./context/AuthContext"
+import Practice from "./pages/Practice"
 
 
 
@@ -32,6 +33,8 @@ const App = () => {
         </Proxy>} />
         <Route path="*" element={<NotFound />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/practice" element={<Practice />} />
+
       </Routes>
     </div>
   )
