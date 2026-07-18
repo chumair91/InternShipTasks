@@ -1,48 +1,33 @@
-const express = require("express");
-const products = require("../../../../Products");
-const { validateId } = require("../../../ValidateId");
+const products = require("../../Products");
 
-const router = express.Router();
-
-router.get("/", (req, res) => {
+const getProducts = (req, res) => {
   res.json(products);
-});
+};
 
-router.get("/error", (req, res) => {
-  throw new Error("database failed");
-});
-
-router.get("/:id", validateId, (req, res) => {
+const getProduct = (req, res) => {
   let product = products.find((p) => p.id === Number(req.params.id));
   if (product === undefined) {
     res.json({ message: "404 not found" });
   } else {
     res.json(product);
   }
-});
+};
 
-router.put("/:id", validateId, (req, res) => {
-  console.log("Products Before Edit");
-  console.log(products);
-
+const updateProduct = (req, res) => {
   const { id } = req.params;
   const intId = Number(id);
   const newP = req.body;
-  console.log(newP);
-
-  console.log(id);
 
   for (let i = 0; i < products.length; i++) {
     if (products[i].id === intId) {
       products[i] = { id: intId, ...newP };
+      res.json({ message: "product updated", status: 201 });
     }
   }
-  console.log("Products after Edit");
-  console.log(products);
-  res.json({ message: "product updated", status: 201 });
-});
+  res.json({ message: "could not find product", status: 404 });
+};
 
-router.post("/", (req, res) => {
+const createProduct=(req, res) => {
   const body = req.body;
   let p = products[products.length - 1];
   const newId = p.id + 1;
@@ -51,9 +36,9 @@ router.post("/", (req, res) => {
   const newProduct = { id: newId, ...body };
   products.push(newProduct);
   res.json({ message: "product added", status: 201 });
-});
+}
 
-router.delete("/:id", validateId, (req, res) => {
+const deleteProduct=(req, res) => {
   const { id } = req.params;
   const intId = Number(id);
   const index = products.findIndex((data) => data.id === intId);
@@ -66,5 +51,6 @@ router.delete("/:id", validateId, (req, res) => {
   return res
     .status(404)
     .json({ message: "could not delete", status: 404, products });
-});
-module.exports = router;
+}
+
+module.exports = { getProducts, getProduct ,updateProduct,createProduct,deleteProduct};
