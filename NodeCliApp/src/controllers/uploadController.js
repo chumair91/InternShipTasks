@@ -3,7 +3,7 @@ const fs = require("fs");
 function uploadAvatar(req, res) {
   const file = req.file;
 
-  res.json({ message: "avatar uploaded successfully", success: true, file });
+  res.json({ success: true, message: "avatar uploaded successfully", file });
 }
 
 function uploadImages(req, res) {
@@ -15,7 +15,7 @@ function uploadImages(req, res) {
       .json({ message: "no images uploaded", success: false, files: [] });
   }
 
-  res.json({ message: "images uploaded successfully", success: true, files });
+  res.status(201).json({ message: "images uploaded successfully", success: true, files });
 }
 
 function serveImg(req, res) {

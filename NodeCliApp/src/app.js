@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const config = require("../config/index");
 const express = require("express");
 const productRouter = require("./routes/productRouter");
 const authRouter = require("./routes/authRouter");
@@ -13,7 +13,7 @@ const errorHandler = require("./middleware/errorHandler");
 
 const limiter = require("./middleware/Limiter");
 const app = express();
-const port = process.env.PORT || 3500;
+const port = config.port;
 app.use(morgan("dev"));
 app.use(limiter);
 app.use(cors());
@@ -21,6 +21,7 @@ app.use(helmet());
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 const path = require("path");
+
 app.use("/api/products", productRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/upload", uploadRouter);
@@ -32,6 +33,20 @@ app.get("/", (req, res) => {
 app.use(notFound);
 app.use(validateId);
 app.use(errorHandler);
-app.listen(port, () => {
+
+
+const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+
+function gracefulShutdown(signal) {
+  console.log(`${signal} received.`);
+  server.close(() => {
+    console.log("http server closed");
+    process.exit(0);
+  });
+}
