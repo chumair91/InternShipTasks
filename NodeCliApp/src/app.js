@@ -21,6 +21,7 @@ app.use(helmet());
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 const path = require("path");
+const connectDB = require("../config/db");
 
 app.use("/api/products", productRouter);
 app.use("/api/auth", authRouter);
@@ -34,10 +35,20 @@ app.use(notFound);
 app.use(validateId);
 app.use(errorHandler);
 
+let server;
 
-const server = app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+const start = async () => {
+  try {
+    await connectDB();
+    server = app.listen(port, () => {
+      console.log(`Server is running at http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error("Application failed to start.", error.message);
+  }
+};
+
+start();
 
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 

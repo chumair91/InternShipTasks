@@ -1,9 +1,13 @@
+const mongoose = require("mongoose");
+
 function validateId(req, res, next) {
   const { id } = req.params;
-  const intId = Number(id);
 
-  if (Number.isNaN(intId)) {
-    return res.status(400).json({ message: "Invalid product id" });
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid product id",
+    });
   }
 
   next();

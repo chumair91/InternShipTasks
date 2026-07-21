@@ -1,4 +1,4 @@
-const required = ["JWT_SECRET_KEY","NODE_ENV"];
+const required = ["JWT_SECRET_KEY", "NODE_ENV", "MONGO_URI"];
 
 required.forEach((key) => {
   if (!process.env[key]) {
@@ -10,6 +10,7 @@ const config = {
   port: process.env.PORT || 3500,
   jwtSecret: process.env.JWT_SECRET_KEY,
   nodeEnv: process.env.NODE_ENV,
+  dburl: process.env.MONGO_URI,
 };
 
 module.exports = config;

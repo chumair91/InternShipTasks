@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const users = require("../store/users");
 const jwt = require("jsonwebtoken");
 const config = require("../../config");
+const User = require("../../model/User");
 
 const regUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -10,21 +11,24 @@ const regUser = async (req, res) => {
       message: "All fields are required",
     });
   }
-  const user = users.find((f) => f.email === email);
-  if (user) {
+  console.log(User);
+  const existingUser = await User.findOne({ email });
+
+  // const user = users.find((f) => f.email === email);
+  if (existingUser) {
     return res
       .status(400)
       .json({ message: "User Already exist", success: false });
   }
-  const hashedPasswrd = await bcrypt.hash(password, 10);
+  // const hashedPasswrd = await bcrypt.hash(password, 10);
 
-  let newId;
-  users.length === 0 ? (newId = 1) : (newId = users[users.length - 1].id + 1);
-  users.push({ id: newId, name, email, password: hashedPasswrd });
-
+  // let newId;
+  // users.length === 0 ? (newId = 1) : (newId = users[users.length - 1].id + 1);
+  // users.push({ id: newId, name, email, password: hashedPasswrd });
+  const user = await User.create({ name, email, password });
   const token = jwt.sign(
     {
-      id: newId,
+      id: user.id,
       name,
       email,
     },
@@ -34,7 +38,7 @@ const regUser = async (req, res) => {
 
   return res
     .status(201)
-    .json({ message: "token created", success: true, token });
+    .json({ message: "token created", success: true, token, data: user });
 };
 
 const loginUser = async (req, res) => {
@@ -44,7 +48,7 @@ const loginUser = async (req, res) => {
       message: "All fields are required",
     });
   }
-  const user = users.find((f) => f.email === email);
+  const user = User.findOne({ email });
 
   if (!user) {
     return res.status(400).json({
@@ -52,7 +56,8 @@ const loginUser = async (req, res) => {
       success: false,
     });
   }
-  const isMatch = await bcrypt.compare(password, user.password);
+  
+  const isMatch = user.comparePassword(password);
   if (!isMatch) {
     return res.status(401).json({
       success: false,

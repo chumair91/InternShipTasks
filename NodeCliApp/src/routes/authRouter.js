@@ -1,8 +1,7 @@
 const express = require("express");
 const {
   regUser,
-  loginUser,
-  verifyUser,
+  loginUser
 } = require("../controllers/authController");
 const asyncHandler = require("../middleware/asyncHandler");
 const router = express.Router();
