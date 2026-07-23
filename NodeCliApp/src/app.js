@@ -22,6 +22,7 @@ app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 const path = require("path");
 const connectDB = require("../config/db");
+const Product = require("../model/Product");
 
 app.use("/api/products", productRouter);
 app.use("/api/auth", authRouter);
@@ -40,6 +41,7 @@ let server;
 const start = async () => {
   try {
     await connectDB();
+
     server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });

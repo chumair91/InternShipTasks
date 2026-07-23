@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Ahmed Khan",
+    "email": "ahmed@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": null,
+    "__v": 0
+  },
+  {
+    "name": "Sara Ahmed",
+    "email": "sara@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": "https://example.com/avatars/sara.jpg",
+    "__v": 0
+  },
+  {
+    "name": "Usman Ali",
+    "email": "usman@gmail.com",
+    "password": "12345678",
+    "role": "admin",
+    "avatar": null,
+    "__v": 0
+  },
+  {
+    "name": "Fatima Noor",
+    "email": "fatima@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": "https://example.com/avatars/fatima.jpg",
+    "__v": 0
+  },
+  {
+    "name": "Hassan Raza",
+    "email": "hassan@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": null,
+    "__v": 0
+  },
+  {
+    "name": "Ayesha Malik",
+    "email": "ayesha@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": "https://example.com/avatars/ayesha.jpg",
+    "__v": 0
+  },
+  {
+    "name": "Bilal Ahmad",
+    "email": "bilal@gmail.com",
+    "password": "12345678",
+    "role": "admin",
+    "avatar": null,
+    "__v": 0
+  },
+  {
+    "name": "Zara Khan",
+    "email": "zara@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": "https://example.com/avatars/zara.jpg",
+    "__v": 0
+  },
+  {
+    "name": "Omar Farooq",
+    "email": "omar@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": null,
+    "__v": 0
+  },
+  {
+    "name": "Mariam Tariq",
+    "email": "mariam@gmail.com",
+    "password": "12345678",
+    "role": "user",
+    "avatar": "https://example.com/avatars/mariam.jpg",
+    "__v": 0
+  }
+]

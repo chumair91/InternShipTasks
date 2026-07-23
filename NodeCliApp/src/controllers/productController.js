@@ -1,12 +1,73 @@
 const { default: mongoose } = require("mongoose");
 const Product = require("../../model/Product");
+const QueryBuilder = require("../utils/QueryBuilder");
+const Review = require("../../model/Review");
+
+// const getProducts = async (req, res) => {
+//   const products = await Product.find();
+//   console.log(products);
+//   res
+//     .status(200)
+//     .json({ success: true, message: "products found", data: products });
+// };
+
+const giveReview = async (req, res) => {
+  const { id } = req.params;
+  const body = req.body;
+  console.log(id, body);
+  Review.create({
+    product: id,
+    user: req.user.id,
+    rating: body.rating,
+    comment: body.comment,
+  });
+  return res.status(201).json({ success: true, message: "Review Posted" });
+};
+
+const getReview = async (req, res) => {
+  const { id } = req.params;
+  console.log("printing id", id);
+
+  const review = await Review.find({ product: id }).populate(
+    "user",
+    "name avatar",
+  );
+
+  if (review) {
+    return res
+      .status(200)
+      .json({ success: true, message: "review found", data: review });
+  }
+};
+
+const deleteReview = async (req, res) => {
+  const review = await Review.findById(req.params.id);
+  console.log(review.user);
+  
+  if (review.user.toString()!==req.user.id && req.user.role!=='admin') {
+     return res
+    .status(400)
+    .json({ success: false, message: "you cant delete this comment" });
+  }
+  const deletedReview=await Review.findByIdAndDelete(req.params.id);
+
+  // 
+  return res
+    .status(200)
+    .json({ success: true, message: "review found and deleted", data: deletedReview });
+};
 
 const getProducts = async (req, res) => {
-  const products = await Product.find();
-  console.log(products);
-  res
-    .status(200)
-    .json({ success: true, message: "products found", data: products });
+  // const products = await Product.find();
+  const builder = new QueryBuilder(Product.find(), req.query);
+  let p = await builder.filter().search().sort().paginate().query;
+  console.log(p);
+  if (p.length !== 0) {
+    return res
+      .status(200)
+      .json({ success: true, message: "products found", data: p });
+  }
+  return res.status(400).json({ success: false, message: "No products Found" });
 };
 
 const getProduct = async (req, res) => {
@@ -23,14 +84,19 @@ const getProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   const { id } = req.params;
 
-  const p = await Product.findByIdAndUpdate(id, req.body, { new: true,runValidators: true });
+  const p = await Product.findByIdAndUpdate(id, req.body, {
+    new: true,
+    runValidators: true,
+  });
   if (!p) {
     return res.status(404).json({
       success: false,
       message: "Product not found",
     });
   }
-return  res.status(201).json({ success: true, message: "product updated" ,data:p});
+  return res
+    .status(201)
+    .json({ success: true, message: "product updated", data: p });
 };
 
 const createProduct = async (req, res) => {
@@ -71,4 +137,7 @@ module.exports = {
   updateProduct,
   createProduct,
   deleteProduct,
+  giveReview,
+  getReview,
+  deleteReview
 };

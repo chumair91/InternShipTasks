@@ -2,7 +2,6 @@ const { default: mongoose } = require("mongoose");
 
 const ProductSchema = new mongoose.Schema(
   {
-    
     name: {
       type: String,
       trim: true,
@@ -21,9 +20,19 @@ const ProductSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
   },
 );
 module.exports = mongoose.model("Product", ProductSchema);
+
+

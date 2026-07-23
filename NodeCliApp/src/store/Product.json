@@ -1,0 +1,137 @@
+[
+  {
+    "name": "MacBook Pro 14",
+    "price": 2499,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-21T14:36:02.485Z" },
+    "updatedAt": { "$date": "2026-07-21T14:48:28.029Z" },
+    "__v": 0
+  },
+  {
+    "name": "MacBook Air M3",
+    "price": 1299,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-21T14:36:26.564Z" },
+    "updatedAt": { "$date": "2026-07-21T14:36:26.564Z" },
+    "__v": 0
+  },
+  {
+    "name": "iMac 24-inch",
+    "price": 1899,
+    "category": "electronics",
+    "inStock": false,
+    "createdAt": { "$date": "2026-07-20T10:15:30.000Z" },
+    "updatedAt": { "$date": "2026-07-20T10:15:30.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Mac mini M4",
+    "price": 799,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-19T08:45:12.000Z" },
+    "updatedAt": { "$date": "2026-07-19T08:45:12.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "iPhone 15 Pro Max",
+    "price": 1399,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-18T16:20:45.000Z" },
+    "updatedAt": { "$date": "2026-07-18T16:20:45.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "iPad Pro 12.9",
+    "price": 1099,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-17T11:30:00.000Z" },
+    "updatedAt": { "$date": "2026-07-17T11:30:00.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Apple Watch Ultra 2",
+    "price": 799,
+    "category": "electronics",
+    "inStock": false,
+    "createdAt": { "$date": "2026-07-16T09:15:22.000Z" },
+    "updatedAt": { "$date": "2026-07-16T09:15:22.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "AirPods Max",
+    "price": 549,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-15T13:40:55.000Z" },
+    "updatedAt": { "$date": "2026-07-15T13:40:55.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Mac Studio M2 Ultra",
+    "price": 3999,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-14T07:25:18.000Z" },
+    "updatedAt": { "$date": "2026-07-14T07:25:18.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Apple TV 4K",
+    "price": 149,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-13T19:50:33.000Z" },
+    "updatedAt": { "$date": "2026-07-13T19:50:33.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "HomePod Mini",
+    "price": 99,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-12T22:10:47.000Z" },
+    "updatedAt": { "$date": "2026-07-12T22:10:47.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "MacBook Pro 16",
+    "price": 3499,
+    "category": "electronics",
+    "inStock": false,
+    "createdAt": { "$date": "2026-07-11T03:05:09.000Z" },
+    "updatedAt": { "$date": "2026-07-11T03:05:09.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Studio Display",
+    "price": 1599,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-10T12:55:41.000Z" },
+    "updatedAt": { "$date": "2026-07-10T12:55:41.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Magic Keyboard",
+    "price": 299,
+    "category": "electronics",
+    "inStock": true,
+    "createdAt": { "$date": "2026-07-09T17:30:28.000Z" },
+    "updatedAt": { "$date": "2026-07-09T17:30:28.000Z" },
+    "__v": 0
+  },
+  {
+    "name": "Mac Pro Rack",
+    "price": 6999,
+    "category": "electronics",
+    "inStock": false,
+    "createdAt": { "$date": "2026-07-08T06:20:15.000Z" },
+    "updatedAt": { "$date": "2026-07-08T06:20:15.000Z" },
+    "__v": 0
+  }
+]

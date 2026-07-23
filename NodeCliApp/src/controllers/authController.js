@@ -1,4 +1,3 @@
-const bcrypt = require("bcrypt");
 const users = require("../store/users");
 const jwt = require("jsonwebtoken");
 const config = require("../../config");
@@ -41,6 +40,26 @@ const regUser = async (req, res) => {
     .json({ message: "token created", success: true, token, data: user });
 };
 
+const updateAddress = async (req, res) => {
+ 
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { address: req.body },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+    if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "user not found",
+    });
+  }
+  return res.status(201).json({success:true,message:"address updated"})
+};
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -48,7 +67,7 @@ const loginUser = async (req, res) => {
       message: "All fields are required",
     });
   }
-  const user = User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     return res.status(400).json({
@@ -56,8 +75,8 @@ const loginUser = async (req, res) => {
       success: false,
     });
   }
-  
-  const isMatch = user.comparePassword(password);
+
+  const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     return res.status(401).json({
       success: false,
@@ -78,4 +97,4 @@ const loginUser = async (req, res) => {
     .json({ message: "token created", success: true, token });
 };
 
-module.exports = { regUser, loginUser };
+module.exports = { regUser, loginUser, updateAddress };
