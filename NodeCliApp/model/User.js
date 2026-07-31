@@ -32,6 +32,26 @@ const UserSchema = mongoose.Schema(
       country: String,
       zipCode: String,
     },
+    stripeCustomerId: {
+      type: String,
+    },
+    paymentFailed: {
+      type: Boolean,
+      default: false,
+    },
+    paymentFailureReason: {
+      type: String,
+      default: null,
+    },
+    subscription: {
+      stripeSubscriptionId: { type: String },
+      plan: {
+        type: String,
+        default: "free",
+      },
+      status: String,
+      currentPeriodEnd: Date,
+    },
   },
   {
     timestamps: true,
@@ -49,5 +69,12 @@ UserSchema.pre("save", async function () {
 UserSchema.methods.comparePassword = async function (userPassword) {
   return await bcrypt.compare(userPassword, this.password);
 };
+
+UserSchema.virtual("fullAddress").get(function () {
+  return `${this.address.street},${this.address.city},${this.address.country} ${this.address.zipCode}`;
+});
+
+UserSchema.set("toJSON", { virtuals: true });
+UserSchema.set("toObject", { virtuals: true });
 
 module.exports = mongoose.model("User", UserSchema);

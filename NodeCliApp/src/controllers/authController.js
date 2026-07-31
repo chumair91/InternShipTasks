@@ -2,6 +2,10 @@ const users = require("../store/users");
 const jwt = require("jsonwebtoken");
 const config = require("../../config");
 const User = require("../../model/User");
+const { default: mongoose } = require("mongoose");
+const Review = require("../../model/Review");
+const Order = require("../../model/Order");
+const redis = require("../../config/redis");
 
 const regUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -41,7 +45,6 @@ const regUser = async (req, res) => {
 };
 
 const updateAddress = async (req, res) => {
- 
   const user = await User.findByIdAndUpdate(
     req.user._id,
     { address: req.body },
@@ -51,19 +54,70 @@ const updateAddress = async (req, res) => {
     },
   );
 
-    if (!user) {
+  if (!user) {
     return res.status(404).json({
       success: false,
       message: "user not found",
     });
   }
-  return res.status(201).json({success:true,message:"address updated"})
+  return res.status(201).json({ success: true, message: "address updated" });
+};
+const deleteUser = async (req, res) => {
+  const reqUser = req.user;
+  if (reqUser.role != "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Only admin can perform this action ",
+    });
+  }
+  let data = {};
+  const session = await mongoose.startSession();
+  await session.withTransaction(async () => {
+    const user = await User.findByIdAndDelete(req.params.id, { session });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const review = await Review.deleteMany(
+      { user: req.params.id },
+      { session },
+    );
+    let reviewRes = "";
+    if (review.deletedCount === 0) {
+      reviewRes = "No review of this user in our system";
+    }
+    //  if (!review) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "No Review found for this user ",
+    //   });
+    // }
+
+    const order = await Order.deleteMany({ user: req.params.id }, { session });
+    let orderRes = "";
+    if (order.deletedCount === 0) {
+      orderRes = "No order of this user in our system";
+    }
+
+    data = {
+      user,
+      review: review ? review : reviewRes,
+      order: order ? order : orderRes,
+    };
+  });
+  return res.status(201).json({
+    success: true,
+    message: "user deleted",
+    data: data,
+  });
 };
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  console.log(email, password);
+
   if (!email || !password) {
     return res.status(400).json({
+      success: false,
       message: "All fields are required",
     });
   }
@@ -92,9 +146,28 @@ const loginUser = async (req, res) => {
     process.env.JWT_SECRET_KEY,
     { expiresIn: "1h" },
   );
+  const key = `session:${user.id}`;
+
+  const userSession = {
+    name: user.name,
+    role: user.role,
+    email: user.email,
+  };
+
+  await redis.setex(key, 3600, JSON.stringify(userSession));
   return res
     .status(201)
     .json({ message: "token created", success: true, token });
 };
 
-module.exports = { regUser, loginUser, updateAddress };
+const verifyUser = async (req, res) => {
+  const userData = {
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+    plan: req.user.subscription.plan,
+  };
+  res.json({ success: true, data: userData });
+};
+
+module.exports = { regUser, loginUser, updateAddress, deleteUser, verifyUser };
