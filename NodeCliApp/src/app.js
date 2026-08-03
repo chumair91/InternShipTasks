@@ -33,7 +33,8 @@ const connectDB = require("../config/db");
 const Product = require("../model/Product");
 const orderRouter = require("./routes/orderRoute");
 const cacheRouter=require('./routes/cacheRouter');
-const stripeRouter=require('./routes/stripeRouter')
+const stripeRouter=require('./routes/stripeRouter');
+const startJobs = require("./jobs");
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -60,7 +61,7 @@ let server;
 const start = async () => {
   try {
     await connectDB();
-
+    startJobs();
     server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });
