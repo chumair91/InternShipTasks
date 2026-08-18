@@ -17,7 +17,10 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await api.post("/auth/login", loginData);
+            // console.log(res);
+
             login(res.data.token);
+            toast.success(res.data.message)
             setLoginData({ email: "", password: "" });
             navigate("/");
         } catch (err) {

@@ -12,6 +12,7 @@ import Plan from './pages/Plan'
 import Checkout from './pages/Checkout'
 import SuccessPayment from './pages/SuccessPayment'
 import { Toaster } from 'sonner';
+import ProductDetails from './pages/ProductDetails'
 
 
 const App = () => {
@@ -29,6 +30,11 @@ const App = () => {
         <Route path='/products' element={
           <ProtectedRoute>
             <Product />
+          </ProtectedRoute>
+        } />
+        <Route path='/product/:id' element={
+          <ProtectedRoute>
+            <ProductDetails />
           </ProtectedRoute>
         } />
         <Route path='/plan' element={

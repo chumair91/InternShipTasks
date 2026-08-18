@@ -21,35 +21,48 @@ const UserAuthProvider = ({ children }) => {
             const token = localStorage.getItem("token");
 
             if (!token) {
+                setUser(null);
                 setLoading(false);
                 return;
             }
-            const res = await api.get('/auth/me');
 
-            // console.log('USer is ', res);
-            setUser(res.data.data)
+            const res = await api.get('/auth/me');
+            setUser(res.data.data);
         } catch (error) {
             console.log(error);
+            if (error.response?.status === 401) {
+                try {
+                    const refreshRes = await api.post("/auth/refresh");
+                    const accessToken = refreshRes.data.token;
+                    localStorage.setItem("token", accessToken);
+                    const userRes = await api.get("/auth/me");
+                    setUser(userRes.data.data);
+                    return;
+                } catch (refreshError) {
+                    console.log("Refresh failed:", refreshError);
+                }
+            } else {
+                localStorage.removeItem('token');
+                setUser(null);
+            }
 
+        } finally {
+            setLoading(false);
         }
-
     }
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            fetchUser()
-        }
 
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchUser();
     }, [])
 
     const register = async (formData) => {
         try {
             const res = await api.post("/auth/register", formData);
-            localStorage.setItem("token", res.data.token);
+            // localStorage.setItem("token", res.data.token);
             await fetchUser();
-            toast.success("Account created successfully");
-            navigate("/products");
+            toast.success(res.data.message);
+            navigate("/login");
             return true;
         } catch (err) {
             toast.error(err.response?.data?.message);
@@ -63,10 +76,23 @@ const UserAuthProvider = ({ children }) => {
         localStorage.setItem("token", token);
         await fetchUser();
     }
-    const logout = () => {
-        console.log('User logged out');
-        localStorage.removeItem('token');
-        navigate('/login');
+
+    const logout = async () => {
+
+        try {
+            const res = await api.post("/auth/logout");
+            toast.success(res.data.message)
+        } catch (err) {
+            console.error("Logout failed:", err);
+            toast.error(err.message)
+        } finally {
+
+            localStorage.removeItem('token');
+            setUser(null);
+            setLoading(false);
+            navigate('/login');
+        }
+
     }
 
     const buySubscription = async (plan) => {

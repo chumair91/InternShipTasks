@@ -19,7 +19,7 @@ const cacheMiddleware = require("../middleware/cacheMiddleware");
 
 const router = express.Router();
 
-router.get("/",cacheMiddleware(60), asyncHanlder(getProducts));
+router.get("/",cacheMiddleware('products',60), asyncHanlder(getProducts));
 router.get("/analytics", asyncHanlder(aggregateProduct));
 // router.get("/analytics/products", asyncHanlder(aggregateProduct));
 
@@ -27,7 +27,7 @@ router.get("/analytics", asyncHanlder(aggregateProduct));
 //   throw new Error("database failed");
 // });
 
-router.get("/:id", validateId, asyncHanlder(getProduct));
+router.get("/:id", protect,validateId,cacheMiddleware('product',200), asyncHanlder(getProduct));
 
 router.put("/:id", validateId, protect, asyncHanlder(updateProduct));
 

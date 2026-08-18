@@ -14,11 +14,11 @@ const UseApi = (endpoint) => {
                 setLoading(true);
                 const res = await api.get(endpoint);
 
-                // console.log("Entire response:", res);
-                // console.log("res.data =", res.data);
-                // console.log("res.data.data =", res.data.data);
-                // console.log("Array?", Array.isArray(res.data.data));
-                // console.log("typeof =", typeof res.data.data);
+                console.log("Entire response:", res);
+                console.log("res.data =", res.data);
+                console.log("res.data.data =", res.data.data);
+                console.log("Array?", Array.isArray(res.data.data));
+                console.log("typeof =", typeof res.data.data);
 
                 setData(res.data.data);
             } catch (error) {

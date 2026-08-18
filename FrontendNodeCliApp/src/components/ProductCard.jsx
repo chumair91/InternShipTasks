@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Star, PackageCheck, PackageX, Boxes, Cpu } from "lucide-react";
+import { Link } from "react-router-dom";
 
 
 
@@ -55,10 +56,12 @@ export default function ProductCard({ product = defaultProduct }) {
   const [hovered, setHovered] = useState(false);
   const oid = getOid(product._id);
   const created = getDate(product.createdAt);
-  const low = product.inStock && product.quantity > 0 && product.quantity <= 5;
+  const quantity = Number(product.quantity ?? 0);
+  const inStock = quantity > 0 || Boolean(product.inStock);
+  const low = inStock && quantity > 0 && quantity <= 5;
 
   return (
-    <div
+    <Link to={`/product/${product._id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="relative w-full max-w-xs overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] transition-transform duration-300"
@@ -87,7 +90,7 @@ export default function ProductCard({ product = defaultProduct }) {
           {product.category}
         </span>
 
-        {product.inStock ? (
+        {inStock ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-medium text-emerald-400">
             <PackageCheck size={12} /> In stock
           </span>
@@ -129,16 +132,16 @@ export default function ProductCard({ product = defaultProduct }) {
           <div className="flex items-center gap-1.5 text-slate-500">
             <Boxes size={13} />
             <span className={`font-mono text-xs ${low ? "text-amber-400" : ""}`}>
-              {product.quantity} left
+              {quantity} left
             </span>
           </div>
         </div>
 
         <button
-          disabled={!product.inStock}
+          disabled={!inStock}
           className="mt-4 w-full rounded-xl bg-cyan-500 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
         >
-          {product.inStock ? "Add to cart" : "Notify me"}
+          {inStock ? "Add to cart" : "Notify me"}
         </button>
 
         {/* document metadata, styled like a spec footer */}
@@ -155,6 +158,6 @@ export default function ProductCard({ product = defaultProduct }) {
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

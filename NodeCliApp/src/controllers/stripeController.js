@@ -29,15 +29,16 @@ const createSubscription = async (req, res) => {
   if (subscription.data.length > 0) {
     return res.status(400).json({
       success: false,
-      message: "You already have an active subscription,try to cancel that first.",
+      message:
+        "You already have an active subscription,try to cancel that first.",
     });
   }
- 
+
   const existingSubs = await stripe.subscriptions.list({
     customer: user.stripeCustomerId,
     status: "incomplete",
   });
-  
+
   // Cancel stale incomplete ones before creating a new attempt
   for (const sub of existingSubs.data) {
     await stripe.subscriptions.cancel(sub.id);
@@ -60,9 +61,11 @@ const createSubscription = async (req, res) => {
   const clientSecret =
     getSubscription.latest_invoice.confirmation_secret.client_secret;
 
-  return res
-    .status(200)
-    .json({ success: true, message: "Plz select a payment method", clientSecret });
+  return res.status(200).json({
+    success: true,
+    message: "Plz select a payment method",
+    clientSecret,
+  });
 };
 
 const getUserDetails = async (req, res) => {
@@ -156,23 +159,82 @@ const paymentHistory = async (req, res) => {
   });
 };
 
-const adminOnly = (req, res, next) => {
+const getRevenue = async (req, res) => {
   if (req.user.role !== "admin") {
-      return res.status(403).json({
-          success: false,
-          message: "Admin access required",
-      });
+    return res.status(403).json({
+      success: false,
+      message: "Admin access required",
+    });
+  }
+  // 1. Get active subscriptions from Stripe
+  const subscriptions = await stripe.subscriptions.list({
+    status: "active",
+    limit: 100,
+  });
+
+  let mrr = 0;
+
+  for (const subscription of subscriptions.data) {
+    const item = subscription.items.data[0];
+
+    if (!item) continue;
+
+    const amount = item.price.unit_amount || 0;
+
+    // Assuming your plans are monthly
+    mrr += amount * (item.quantity || 1);
   }
 
-  next();
-};
+  // 2. Start of current month
+  const now = new Date();
 
-module.exports = adminOnly;
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const startTimestamp = Math.floor(startOfMonth.getTime() / 1000);
+
+  // 3. Get successful charges this month
+  const charges = await stripe.charges.list({
+    created: {
+      gte: startTimestamp,
+    },
+    limit: 100,
+  });
+
+  let totalChargesThisMonth = 0;
+
+  for (const charge of charges.data) {
+    if (charge.paid && !charge.refunded) {
+      totalChargesThisMonth += charge.amount;
+    }
+  }
+
+  // 4. Get failed payment intents
+  const failedPayments = await stripe.paymentIntents.list({
+    created: {
+      gte: startTimestamp,
+    },
+    limit: 100,
+  });
+
+  const failedPaymentsCount = failedPayments.data.filter(
+    (payment) => payment.status === "requires_payment_method",
+  ).length;
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      mrr,
+      totalChargesThisMonth,
+      failedPayments: failedPaymentsCount,
+    },
+  });
+};
 
 module.exports = {
   createSubscription,
   checkConnection,
   getUserDetails,
   cancelSubscription,
-  paymentHistory,adminOnly
+  paymentHistory,
+  getRevenue,
 };
