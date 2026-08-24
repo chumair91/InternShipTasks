@@ -37,13 +37,13 @@ afterAll(async () => {
   }
 });
 
-mongoose.connection.on("connected", () => {
-  console.log("test mongo connected");
+mongoose.connection.on('connected', () => {
+  console.log('test mongo connected');
 });
-mongoose.connection.on("disconnected", () => {
-  console.log("test mongo disconnected");
+mongoose.connection.on('disconnected', () => {
+  console.log('test mongo disconnected');
 });
 
-mongoose.connection.on("error", (err) => {
-  console.log("error while connecting  test mongo", err);
+mongoose.connection.on('error', (err) => {
+  console.log('error while connecting  test mongo', err);
 });

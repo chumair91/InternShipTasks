@@ -16,6 +16,10 @@ const createUserAndGetToken = async (role = 'user') => {
     password: 'password123',
   });
 
+  if (!response.body || !response.body.token) {
+    throw new Error(`Login failed in test helper: ${JSON.stringify(response.body)}`);
+  }
+
   return response.body.token;
 };
 

@@ -306,7 +306,6 @@ const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
 
-
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
   const user = await User.findOne({
@@ -343,10 +342,10 @@ const changePassword = async (req, res) => {
   //     message: 'Current password and new password are required',
   //   });
   // }
-console.log(req.user);
+  console.log(req.user);
 
   const user = await User.findById(req.user._id);
- 
+
   if (!user) {
     return res.status(404).json({
       success: false,
@@ -388,5 +387,5 @@ module.exports = {
   logoutUser,
   forgetPassword,
   resetPassword,
-  changePassword
+  changePassword,
 };

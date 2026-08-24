@@ -34,7 +34,7 @@ router.put("/:id", validateId, protect, adminAuth,asyncHanlder(updateProduct));
 
 router.post("/",protect, adminAuth,asyncHanlder(createProduct));
 
-router.delete("/:id", validateId,adminAuth, protect, asyncHanlder(deleteProduct));
+router.delete("/:id", validateId, protect, adminAuth, asyncHanlder(deleteProduct));
 router.post("/:id/reviews", validateId, protect, asyncHanlder(giveReview));
 router.get("/:id/reviews", validateId, asyncHanlder(getReview));
 router.delete("/reviews/:id", validateId, protect, asyncHanlder(deleteReview));
