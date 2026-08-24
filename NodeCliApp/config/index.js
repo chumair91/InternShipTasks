@@ -17,6 +17,7 @@ const config = {
 
   nodeEnv: process.env.NODE_ENV,
   dburl: process.env.MONGO_URI,
+  mongoTest:process.env.MONGO_URI_TEST,
   redisUrl: process.env.REDIS_URL,
   redisDefUserPassword: process.env.REDIS_DEF_USER_PASS,
   redisUsername: process.env.REDIS_USERNAME,

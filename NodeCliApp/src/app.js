@@ -29,7 +29,7 @@ const {
   adminLimiter,
 } = require('./middleware/Limiter');
 
-const port = config.port;
+
 app.use(morgan('dev'));
 app.use(cookieParser());
 // app.use(limiter);
@@ -61,21 +61,15 @@ app.use(xss());
 app.use(mongoSanitize());
 app.use(hpp());
 const path = require('path');
-const connectDB = require('../config/db');
-const Product = require('../model/Product');
+
+
 const orderRouter = require('./routes/orderRoute');
 const cacheRouter = require('./routes/cacheRouter');
 const stripeRouter = require('./routes/stripeRouter');
 const adminRouter = require('./routes/adminRoutes');
-require('./workers/emailWorker');
-require('./workers/stockWorker');
-require('./workers/paymentWorker');
-require('./workers/orderWorker');
-require('./workers/rollbackWorker');
-require('./workers/reportWorker'); 
-require('./workers/failedJobWorker');
-const startJobs = require('./jobs');
-const emailQueue = require('./queues/emailQueue');
+
+
+
 const serverAdapter = require('../config/bullBoard');
 const protect = require('./middleware/authProvider');
 const adminAuth = require('./middleware/adminAuth');
@@ -137,30 +131,4 @@ app.use(notFound);
 app.use(validateId);
 app.use(errorHandler);
 
-let server;
-
-const start = async () => {
-  try {
-    await connectDB();
-    startJobs();
-    server = app.listen(port, () => {
-      console.log(`Server is running at http://localhost:${port}`);
-    });
-  } catch (error) {
-    console.error('Application failed to start.', error.message);
-  }
-};
-
-start();
-
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-
-function gracefulShutdown(signal) {
-  console.log(`${signal} received.`);
-  server.close(() => {
-    console.log('http server closed');
-    process.exit(0);
-  });
-}
+module.exports=app

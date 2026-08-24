@@ -13,6 +13,7 @@ import Checkout from './pages/Checkout'
 import SuccessPayment from './pages/SuccessPayment'
 import { Toaster } from 'sonner';
 import ProductDetails from './pages/ProductDetails'
+import TimeTest from './pages/TimeTest'
 
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
       <Navbar username={user?.name} />
       <Routes>
         <Route path='/' element={<Home />} />
+        <Route path='/timetest' element={<TimeTest/>}/>
         <Route path='subscribe' element={<Subscribe />} />
         <Route path='/login' element={<PublicRoute>
           <Login />

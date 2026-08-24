@@ -1,0 +1,17 @@
+{
+  "name": "jestpratice",
+  "version": "1.0.0",
+  "author": "",
+  "main": "index.js",
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14"
+  },
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {
+    "test": "jest"
+  },
+  "type": "commonjs"
+}
