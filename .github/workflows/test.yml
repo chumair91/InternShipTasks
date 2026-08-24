@@ -49,11 +49,22 @@ jobs:
       - name: Run tests
         env:
           NODE_ENV: test
+
           MONGO_URI_TEST: mongodb://127.0.0.1:27017/testdb
+
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
+
           JWT_ACCESS_SECRET_KEY: test_jwt_access_secret_key
           JWT_REFRESH_SECRET_KEY: test_jwt_refresh_secret_key
           JWT_ACCESS_EXPIRES_IN: 15m
           JWT_REFRESH_EXPIRES_IN: 7d
-        run: npm test
+
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+          STRIPE_BASIC_PRICE_ID: price_test_basic
+          STRIPE_PRO_PRICE_ID: price_test_pro
+
+          ALLOWED_ORIGINS: http://localhost:5173
+
+        run: npm test -- --runInBand
