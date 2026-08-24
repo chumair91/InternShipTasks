@@ -52,6 +52,8 @@ jobs:
           MONGO_URI_TEST: mongodb://127.0.0.1:27017/testdb
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
+          STRIPE_SECRET_KEY: sk_test_ci
+          ALLOWED_ORIGINS: http://localhost:5173
           JWT_ACCESS_SECRET_KEY: test_jwt_access_secret_key
           JWT_REFRESH_SECRET_KEY: test_jwt_refresh_secret_key
           JWT_ACCESS_EXPIRES_IN: 15m
