@@ -1,200 +1,275 @@
+
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, ShieldCheck, Star, Truck } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Minus, Plus } from "lucide-react";
 import api from "../api/axios";
-
-const formatPrice = (value) => {
-    if (value === null || value === undefined || value === "") return "--";
-
-    const numericValue = Number(value);
-    if (Number.isNaN(numericValue)) return value;
-
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-    }).format(numericValue);
-};
+import { createOrder } from "../api/orderApi";
+import { toast } from "sonner";
+import { waitForCheckout } from "../services/orderService";
 
 const ProductDetails = () => {
     const { id } = useParams();
+    // const navigate = useNavigate();
+
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
-        let isMounted = true;
-
-        const fetchDetails = async () => {
+        const fetchProduct = async () => {
             try {
                 const res = await api.get(`/products/${id}`);
-                console.log(res);
-                
+
                 const result = res?.data?.data ?? res?.data ?? null;
-                 
-                if (isMounted) {
-                    setProduct(result);
-                }
+                console.log(result);
+
+                setProduct(result);
             } catch (err) {
-                if (isMounted) {
-                    setError("Product details could not be loaded right now.",err);
-                }
+                console.error(err);
+                setError("Could not load product.");
             } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
+                setLoading(false);
             }
         };
 
-        fetchDetails();
-
-        return () => {
-            isMounted = false;
-        };
+        fetchProduct();
     }, [id]);
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900 px-6 py-4 text-sm text-slate-300">
-                    Loading product details...
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <p className="text-gray-600">Loading...</p>
             </div>
         );
     }
 
     if (error || !product) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-center text-slate-100">
-                <div className="max-w-md rounded-3xl border border-red-500/30 bg-slate-900 p-8 shadow-2xl shadow-slate-950/40">
-                    <p className="text-lg font-semibold text-red-400">Oops!</p>
-                    <p className="mt-3 text-sm text-slate-300">{error || "No product information found."}</p>
-                    <Link
-                        to="/products"
-                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-                    >
-                        <ArrowLeft size={16} />
-                        Back to products
-                    </Link>
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+                <p className="mb-4 text-red-500">
+                    {error || "Product not found"}
+                </p>
+
+                <Link
+                    to="/products"
+                    className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800"
+                >
+                    <ArrowLeft size={18} />
+                    Back to Products
+                </Link>
             </div>
         );
     }
 
-    const imageUrl =
+    const image =
         product.image ||
         product.thumbnail ||
         product.images?.[0] ||
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80";
+        "https://via.placeholder.com/600";
 
-    const productPrice = Number(product.discountedPrice ?? product.price ?? 0);
-    const originalPrice = Number(product.price ?? product.discountedPrice ?? 0);
-    const hasDiscount = product.discountedPrice && product.discountedPrice < product.price;
-    const quantity = Number(product.quantity ?? 0);
-    const stockStatus = quantity > 0 || Boolean(product.inStock);
-    const rating = Number(product.averageRating ?? 0);
-    const reviewCount = Number(product.reviewCount ?? 0);
+    const price = Number(product.discountedPrice ?? product.price ?? 0);
+    const originalPrice = Number(product.price ?? 0);
+
+    const stock = Number(product.quantity ?? 0);
+    const isAvailable = product.quantity > 0;
+
+    const increaseQuantity = () => {
+        if (quantity < stock) {
+            setQuantity((prev) => prev + 1);
+        }
+    };
+
+    const decreaseQuantity = () => {
+        if (quantity > 1) {
+            setQuantity((prev) => prev - 1);
+        }
+    };
+
+    // Add product to cart
+    const handleAddToCart = () => {
+        const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+        const existingItem = existingCart.find((item) => item.productId === product.id);
+
+        const currentCartQuantity = existingItem ? existingItem.quantity : 0;
+        if (currentCartQuantity + quantity > stock) {
+            toast.error(`Only ${stock} items available`);
+            return;
+        }
+
+        if (existingItem) {
+
+            existingItem.quantity += quantity;
+        } else {
+            existingCart.push({
+                productId: id,
+                name: product.name,
+                price,
+                quantity,
+                image,
+                category: product.category,
+                stock
+            })
+        }
+
+        localStorage.setItem("cart", JSON.stringify(existingCart));
+
+        console.log("Cart:", existingCart);
+        toast.success(product.name + " added to cart ")
+
+    };
+
+    // Go directly to checkout
+    const handleBuyNow = async () => {
+        try {
+            const order = await createOrder([{
+                product: product.id,
+                quantity: quantity
+            }])
+            console.log("Order created", order);
+            const checkoutUrl = await waitForCheckout(order.orderId);
+
+            window.location.href = checkoutUrl;
+
+        } catch (error) {
+            console.error("Order creation failed:", error);
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100">
+        <div className="min-h-screen bg-gray-50 px-4 py-8">
             <div className="mx-auto max-w-6xl">
+
+                {/* Back */}
                 <Link
                     to="/products"
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-cyan-500 hover:text-cyan-300"
+                    className="mb-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
                 >
-                    <ArrowLeft size={16} />
-                    Back to products
+                    <ArrowLeft size={18} />
+                    Back to Products
                 </Link>
 
-                <div className="mt-8 overflow-hidden rounded-[28px] border border-slate-800 bg-slate-900/80 shadow-[0_25px_80px_rgba(15,23,42,0.7)] backdrop-blur-sm">
-                    <div className="grid gap-8 p-6 md:grid-cols-2 md:p-10">
-                        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950">
-                            <img
-                                src={imageUrl}
-                                alt={product.name}
-                                className="h-full min-h-[420px] w-full object-cover"
-                            />
-                            <div className="absolute left-4 top-4 rounded-full border border-cyan-500/30 bg-slate-950/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
-                                {product.category || "Product"}
-                            </div>
-                        </div>
+                {/* Product Card */}
+                <div className="grid overflow-hidden rounded-2xl bg-white shadow-sm md:grid-cols-2">
 
-                        <div className="flex flex-col justify-center">
-                            <div className="mb-4 flex items-center justify-between gap-3">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                                    <BadgeCheck size={14} />
-                                    {stockStatus ? "In stock" : "Out of stock"}
-                                </div>
+                    {/* Image */}
+                    <div className="flex items-center justify-center bg-gray-100 p-6 sm:p-10">
+                        <img
+                            src={image}
+                            alt={product.name}
+                            className="h-72 w-full object-contain sm:h-96"
+                        />
+                    </div>
 
-                                <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs text-slate-300">
-                                    <Truck size={14} className="text-cyan-300" />
-                                    Free shipping
-                                </div>
-                            </div>
+                    {/* Details */}
+                    <div className="p-6 sm:p-8 md:p-10">
 
-                            <h1 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
-                                {product.name}
-                            </h1>
+                        {/* Category */}
+                        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                            {product.category}
+                        </p>
 
-                            <div className="mt-4 flex items-center gap-3 text-sm text-slate-300">
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: 5 }).map((_, index) => (
-                                        <Star
-                                            key={index}
-                                            size={16}
-                                            className={index < Math.round(rating) ? "fill-cyan-400 text-cyan-400" : "text-slate-600"}
-                                        />
-                                    ))}
-                                </div>
-                                <span>{rating.toFixed(1)}</span>
-                                <span className="text-slate-500">({reviewCount} reviews)</span>
-                            </div>
+                        {/* Name */}
+                        <h1 className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+                            {product.name}
+                        </h1>
 
-                            <div className="mt-6 flex items-end gap-3">
-                                <span className="text-4xl font-bold text-white">
-                                    {formatPrice(productPrice || originalPrice)}
+                        {/* Rating */}
+                        {product.reviewCount > 0 && (
+                            <p className="mt-3 text-sm text-gray-500">
+                                ⭐ {Number(product.averageRating).toFixed(1)}
+                                {" "}
+                                ({product.reviewCount} reviews)
+                            </p>
+                        )}
+
+                        {/* Price */}
+                        <div className="mt-6 flex items-center gap-3">
+                            <span className="text-3xl font-bold text-gray-900">
+                                ${price.toFixed(2)}
+                            </span>
+
+                            {price < originalPrice && (
+                                <span className="text-lg text-gray-400 line-through">
+                                    ${originalPrice.toFixed(2)}
                                 </span>
-                                {hasDiscount && (
-                                    <span className="mb-1 text-lg text-slate-400 line-through">
-                                        {formatPrice(originalPrice)}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300">
-                                <p className="leading-7 text-slate-300">
-                                    {product.description ||
-                                        "A high-quality product built for performance, durability, and everyday convenience. Designed to fit your needs with a premium feel and dependable reliability."}
-                                </p>
-                            </div>
-
-                            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Availability</p>
-                                    <p className="mt-2 text-base font-semibold text-slate-100">
-                                        {stockStatus ? `${product.quantity ?? 1} items left` : "Currently unavailable"}
-                                    </p>
-                                </div>
-
-                                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Warranty</p>
-                                    <p className="mt-2 text-base font-semibold text-slate-100">12 months</p>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                                <button className="flex-1 rounded-2xl bg-cyan-500 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-cyan-400">
-                                    Add to cart
-                                </button>
-                                <button className="flex-1 rounded-2xl border border-slate-700 bg-slate-950 px-6 py-3 text-base font-semibold text-slate-100 transition hover:border-cyan-500 hover:text-cyan-300">
-                                    Buy now
-                                </button>
-                            </div>
-
-                            <div className="mt-8 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300">
-                                <ShieldCheck className="text-emerald-400" size={18} />
-                                Secure checkout and trusted delivery guarantee.
-                            </div>
+                            )}
                         </div>
+
+                        {/* Description */}
+                        <p className="mt-5 leading-7 text-gray-600">
+                            {product.description || "No description available."}
+                        </p>
+
+                        {/* Stock */}
+                        <div className="mt-6">
+                            {isAvailable ? (
+                                <p className="text-sm font-medium text-green-600">
+                                    ✓ In Stock ({stock} available)
+                                </p>
+                            ) : (
+                                <p className="text-sm font-medium text-red-600">
+                                    ✕ Out of Stock
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Quantity */}
+                        {isAvailable && (
+                            <div className="mt-6">
+                                <p className="mb-2 text-sm font-medium text-gray-700">
+                                    Quantity
+                                </p>
+
+                                <div className="flex w-fit items-center rounded-lg border border-gray-300">
+
+                                    <button
+                                        onClick={decreaseQuantity}
+                                        disabled={quantity === 1}
+                                        className="p-2 hover:bg-gray-100 disabled:opacity-40"
+                                    >
+                                        <Minus size={18} />
+                                    </button>
+
+                                    <span className="w-12 text-center font-medium">
+                                        {quantity}
+                                    </span>
+
+                                    <button
+                                        onClick={increaseQuantity}
+                                        disabled={quantity >= stock}
+                                        className="p-2 hover:bg-gray-100 disabled:opacity-40"
+                                    >
+                                        <Plus size={18} />
+                                    </button>
+
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Buttons */}
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+
+                            {/* Add to Cart */}
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={!isAvailable}
+                                className="flex-1 rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-900 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Add to Cart
+                            </button>
+
+                            {/* Buy Now */}
+                            <button
+                                onClick={handleBuyNow}
+                                disabled={!isAvailable}
+                                className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            >
+                                Buy Now
+                            </button>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -203,3 +278,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config";
+import socket from "../socket";
 
 const api = axios.create({
   baseURL: config.apiUrl,
@@ -19,18 +20,22 @@ api.interceptors.request.use((config) => {
 
 let isRefreshing = false;
 let refreshPromise = null;
+const PUBLIC_AUTH_ROUTES = ["/auth/login", "/auth/register", "/auth/refresh"];
 
 api.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
+    const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((p) =>
+      originalRequest.url.includes(p),
+    );
 
     // Only handle 401s from normal API requests
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh")
+      !isPublicAuthRoute
     ) {
       originalRequest._retry = true;
 
@@ -64,6 +69,12 @@ api.interceptors.response.use(
 
         localStorage.setItem("token", newToken);
 
+        socket.auth = { token: newToken };
+        if (socket.connected) {
+          socket.disconnect();
+        }
+        socket.connect();
+
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
@@ -80,7 +91,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

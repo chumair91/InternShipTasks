@@ -13,10 +13,10 @@ const checkBruteLock = async (email) => {
   console.log('Current attempts:', attempts);
 
   if (attempts && attempts >= MAX_ATTEMPTS) {
-    const ttl =await redis.ttl(key);
+    const ttl = await redis.ttl(key);
     return {
       blocked: true,
-      remainingTime: Math.floor(ttl/60),
+      remainingTime: Math.floor(ttl / 60),
     };
   }
   return {
@@ -30,15 +30,15 @@ const recordAttempt = async (email) => {
   console.log('return value', attempts);
 
   if (attempts === 1) {
-    await redis.expire(key,LOCK_TIME);
+    await redis.expire(key, LOCK_TIME);
   }
   return attempts;
 };
 
-const resetAttempts=async (email)=>{
-    const key=getkey(email);
-    await redis.del(key);
-      console.log("Login attempts reset for:", email);
-}
+const resetAttempts = async (email) => {
+  const key = getkey(email);
+  await redis.del(key);
+  console.log('Login attempts reset for:', email);
+};
 
-module.exports = { recordAttempt,checkBruteLock,resetAttempts };
+module.exports = { recordAttempt, checkBruteLock, resetAttempts };

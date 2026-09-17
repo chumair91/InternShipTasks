@@ -203,6 +203,7 @@ const verifyUser = async (req, res) => {
     name: req.user.name,
     email: req.user.email,
     plan: req.user.subscription.plan,
+    role: req.user.role,
   };
   res.json({ success: true, data: userData });
 };

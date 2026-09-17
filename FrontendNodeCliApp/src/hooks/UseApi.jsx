@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import api from '../api/axios';
 
@@ -8,34 +8,35 @@ const UseApi = (endpoint) => {
     const [error, setError] = useState(null);
 
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                setLoading(true);
-                const res = await api.get(endpoint);
 
-                console.log("Entire response:", res);
-                console.log("res.data =", res.data);
-                console.log("res.data.data =", res.data.data);
-                console.log("Array?", Array.isArray(res.data.data));
-                console.log("typeof =", typeof res.data.data);
+    const fetchProducts = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(endpoint);
 
-                setData(res.data.data);
-            } catch (error) {
-                console.error(error);
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+            // console.log("Entire response:", res);
+            // console.log("res.data =", res.data);
+            // console.log("res.data.data =", res.data.data);
+            // console.log("Array?", Array.isArray(res.data.data));
+            // console.log("typeof =", typeof res.data.data);
 
-        fetchProducts();
+            setData(res.data.data);
+        } catch (error) {
+            console.error(error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
     }, [endpoint]);
 
 
-    return {
-        data, error, loading
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
+
+    return {
+        data, error, loading, refetch: fetchProducts
     }
 }
 

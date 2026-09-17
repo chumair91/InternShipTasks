@@ -1,15 +1,14 @@
 const cron = require("node-cron");
 const Product = require("../../model/Product");
 const preventOverlap = require("./utils/preventOverlap");
+const getLowStockProducts = require("./utils/getLowStockProducts");
 
 const runlowStockAlert=preventOverlap("LowStockAlert job",async () => {
  
  
  
  
-    const lowStockProducts = await Product.find({
-      quantity: { $lt: 5 },
-    }).select("_id name quantity");
+    const lowStockProducts = await getLowStockProducts();
    
     
     if (lowStockProducts.length === 0) {

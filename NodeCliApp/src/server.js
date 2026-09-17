@@ -2,6 +2,7 @@ const { port } = require("../config");
 const connectDB = require("../config/db");
 const app = require("./app");
 const startJobs = require("./jobs");
+const { initializeSocket } = require("./socket");
 
 require('./workers/emailWorker');
 require('./workers/stockWorker');
@@ -20,6 +21,7 @@ const start = async () => {
     server = app.listen(port, () => {
       console.log(`Server is running at http://localhost:${port}`);
     });
+       initializeSocket(server);
   } catch (error) {
     console.error('Application failed to start.', error.message);
   }

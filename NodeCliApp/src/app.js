@@ -2,12 +2,7 @@ const express = require('express');
 const app = express();
 require('dotenv').config();
 const cors = require('cors');
-app.use(
-  cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  })
-);
+
 const config = require('../config/index');
 const mongoSanitize = require('@exortek/express-mongo-sanitize');
 const productRouter = require('./routes/productRouter');
@@ -59,7 +54,7 @@ app.use(express.json({ limit: '10kb' })); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(xss());
 app.use(mongoSanitize());
-app.use(hpp());
+app.use(hpp({ whitelist: ['items'] }));
 const path = require('path');
 
 

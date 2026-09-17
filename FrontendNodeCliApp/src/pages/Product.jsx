@@ -1,15 +1,34 @@
 
 
+import { useEffect } from "react";
 import ProductCard from "../components/productCard";
 import UseApi from "../hooks/useApi";
+import { toast } from "sonner";
+import socket from "../socket";
 
 const Product = () => {
-  const { error, loading, data } = UseApi('/products')
+  const { error, loading, data, refetch } = UseApi('/products')
 
   // console.log("data:", data);
   // console.log("isArray:", Array.isArray(data));
   // console.log("typeof:", typeof data);
- 
+  useEffect(() => {
+
+    const handleProductUpdate = (data) => {
+      console.log("Product changed:", data);
+
+      toast.info("Products updated. Refreshing...");
+
+      refetch();
+    };
+
+    socket.on("product:updated", handleProductUpdate);
+
+    return () => {
+      socket.off("product:updated", handleProductUpdate);
+    };
+
+  }, [refetch]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -27,7 +46,7 @@ const Product = () => {
       {/* {
 console.log("printing type of data ",typeof data)
       } */}
-    
+
 
     </div>
   );

@@ -17,7 +17,7 @@ function hpp(options = {}) {
     }
 
     // Sanitize req.body
-    if (req.body && typeof req.body === 'object') {
+    if (req.body && typeof req.body === 'object' && !req.is('json')) {
       for (const key of Object.keys(req.body)) {
         if (Array.isArray(req.body[key]) && !whitelist.includes(key)) {
           req.body[key] = req.body[key][req.body[key].length - 1];

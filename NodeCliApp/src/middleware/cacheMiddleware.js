@@ -1,4 +1,4 @@
-const redis = require("../../config/redis");
+const redis = require('../../config/redis');
 
 const cacheMiddleware =
   (namespace, ttl = 60) =>
@@ -7,25 +7,26 @@ const cacheMiddleware =
     try {
       const cached = await redis.get(key);
       if (cached) {
-        console.log("cache hit:", key);
+        console.log('cache hit:', key);
         return res.status(200).json(JSON.parse(cached));
       }
-      console.log("cache miss:", key);
+      console.log('cache miss:', key);
       let originalJson = res.json;
 
       res.json = async function (body) {
         try {
           await redis.setex(key, ttl, JSON.stringify(body));
-          console.log("stored in cache:", key);
+          console.log('stored in cache:', key);
         } catch (error) {
-          console.log("Redis cache error:", error.message);
+          console.log('Redis cache error:', error.message);
         }
 
         return originalJson.call(this, body);
       };
       next();
     } catch (error) {
-      console.log("Redis cache error:", error.message);
+      console.log('Redis cache error:', error.message);
+      next();
     }
   };
 

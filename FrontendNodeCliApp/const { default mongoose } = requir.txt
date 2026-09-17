@@ -1,0 +1,468 @@
+const { default: mongoose } = require('mongoose');
+
+const orderSchema = mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+          default: 0,
+        },
+      },
+    ],
+    total: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: [
+        'pending',
+        'stock-validated',
+        'payment-completed',
+        'processed',
+        'failed',
+        'cancelled',
+      ],
+      default: 'pending',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed'],
+      default: 'pending',
+    },
+
+    stripeSessionId: {
+      type: String,
+    },
+
+    checkoutUrl: {
+      type: String,
+    },
+
+    paidAt: {
+      type: Date,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+module.exports = mongoose.model('Order', orderSchema);
+
+
+
+
+const { webhook } = require("../controllers/webhookController");
+
+const router = require("express").Router();
+
+router.post("/stripe", webhook);
+
+module.exports = router;
+   
+const config = require("../../config");
+const stripe = require("../../config/stripe");
+const User = require("../../model/User");
+
+const webhook = async (req, res) => {
+  const signature = req.headers["stripe-signature"];
+  const endpointSecret = config.stripWebhookSecret;
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, signature, endpointSecret);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+  //   const subscription=event.data.object;
+
+  //   console.log(JSON.stringify(event.data.object, null, 2));
+
+  switch (event.type) {
+    case "customer.subscription.updated":
+      try {
+        const subscription = event.data.object;
+        const user = await User.findOne({
+          stripeCustomerId: subscription.customer,
+        });
+        if (!user) break;
+
+        let plan = "free";
+        const priceId = subscription.items.data[0].price.id;
+        if (priceId === config.stripeBasicPlan) plan = "basic";
+        if (priceId === config.stripeProPlan) plan = "pro";
+        console.log(subscription.id);
+
+        user.subscription.plan = plan;
+        user.subscription.stripeSubscriptionId = subscription.id;
+        user.subscription.status = subscription.status;
+        user.subscription.currentPeriodEnd = new Date(
+          subscription.items.data[0].current_period_end * 1000,
+        );
+
+        await user.save();
+        console.log("Subscription synced.");
+      } catch (err) {
+        console.error("Failed to sync subscription:", err);
+        return res.status(500).send("Webhook handler failed");
+      }
+      break;
+
+    case "customer.subscription.deleted":
+      console.log("subscription deleted");
+      break;
+    case "invoice.payment_failed":
+      const invoice = event.data.object;
+      const user = await User.findOne({
+        stripeCustomerId: invoice.customer,
+      });
+      if (!user) {
+        console.log("User not found for Stripe customer:", invoice.customer);
+        break;
+      }
+      user.paymentFailed = true;
+      user.paymentFailureReason =
+        invoice.last_finalization_error?.message || "Payment failed";
+
+      await user.save();
+
+      console.log("Payment failure recorded for:", user.email);
+      console.log("subscription deleted");
+      break;
+
+    case "invoice.paid": {
+      const invoice = event.data.object;
+
+      const user = await User.findOne({
+        stripeCustomerId: invoice.customer,
+      });
+
+      if (user) {
+        user.paymentFailed = false;
+        user.paymentFailureReason = null;
+        await user.save();
+      }
+
+      break;
+    }
+
+    default:
+      console.log(event.type);
+      break;
+  }
+
+  res.json({ received: true });
+};
+
+module.exports = { webhook };
+ 
+
+
+
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+const User = require('../model/User');
+
+let io;
+const initializeSocket = (server) => {
+  io = new Server(server, {
+    cors: {
+      origin: config.allowedOrigins.split(',').map((p) => p.trim()),
+      credentials: true,
+    },
+  });
+
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token;
+      if (!token) {
+        return next(new Error('Authentication required'));
+      }
+      const decoded = jwt.verify(token, config.jwtAccessSecret);
+      // console.log(decoded);
+      const user = await User.findById(decoded.id);
+      // console.log(user);
+      if (!user) {
+        return next(new Error('User not found'));
+      }
+      socket.user = user;
+      next();
+    } catch (error) {
+      console.error('Socket auth error:', error.message);
+      next(new Error('Invalid authentication token'));
+    }
+  });
+  io.on('connection', (socket) => {
+    const userId = socket.user._id.toString();
+    console.log(`Socket connected: ${userId}`);
+    socket.join(`user:${userId}`);
+    socket.on('disconnect', () => {
+      console.log(`Socket disconnected: ${userId}`);
+    });
+  });
+  return io;
+};
+
+const getIO = () => {
+  if (!io) {
+    throw new Error('Socket.IO has not been initialized');
+  }
+  return io;
+};
+module.exports = {
+  initializeSocket,
+  getIO,
+};      
+
+const { getIO } = require('./socket');
+
+const emitToUserRoom = (userId, event, data) => {
+  getIO().to(`user:${userId}`).emit(event, data);
+};
+
+const emitToAll = (event, data) => {
+  getIO().emit(event, data);
+};
+
+module.exports = { emitToUserRoom, emitToAll };
+ 
+
+
+
+const express = require("express");
+const { default: mongoose } = require("mongoose");
+const Order = require("../../model/Order");
+const Product = require("../../model/Product");
+const protect = require("../middleware/authProvider");
+const asyncHanlder = require("../middleware/asyncHandler");
+const placeOrder = require("../controllers/orderController");
+
+const router = express.Router();
+
+router.post("/", protect, asyncHanlder(placeOrder));
+
+module.exports = router;
+   
+
+
+const { default: mongoose } = require('mongoose');
+const Product = require('../../model/Product');
+const Order = require('../../model/Order');
+const flowProducer = require('../flow/orderFlow');
+const { emitToUserRoom } = require('../socketEvent');
+
+// const placeOrder = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   try {
+//     let order;
+//     await session.withTransaction(async () => {
+//       let total = 0;
+//       const user = req.user._id;
+//       let orderItems = [];
+//       for (const cartItem of req.body.items) {
+//         let product = await Product.findById(cartItem.product).session(session);
+//         if (!product) {
+//           throw new Error("Product not found");
+//         }
+//         if (product.quantity < cartItem.quantity) {
+//           throw new Error(`${product.name} is out of stock`);
+//         }
+//         if (product.inStock && product.quantity >= cartItem.quantity) {
+//           total += product.price * cartItem.quantity;
+//           product.quantity -= cartItem.quantity;
+//           if (product.quantity === 0) {
+//             product.inStock = false;
+//           }
+//           orderItems.push({
+//             product: product._id,
+//             quantity: cartItem.quantity,
+//             price: product.price,
+//           });
+//           await product.save({ session });
+//         }
+//       }
+//       [order] = await Order.create(
+//         [
+//           {
+//             user: user,
+//             items: orderItems,
+//             total: total,
+//           },
+//         ],
+//         { session },
+//       );
+//       await flowProducer.add({
+//         name: "process-order",
+//         queueName: "order",
+//         data: {
+//           orderId: order._id,
+//         },
+
+//         children: [
+//           {
+//             name: "validate-stock",
+//             queueName: "stock",
+//             data: {
+//               orderId: order._id,
+//             },
+//           },
+//           {
+//             name:'charge-payment',
+//             queueName:'payment',
+//             data:{
+//               orderId:order._id,
+//             }
+//           },
+//           {
+//             name:'send-email',
+//             queueName:'email',
+//             data:{
+//               orderId:order._id,
+//             }
+//           }
+//         ],
+//       });
+//       console.log(order);
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       order,
+//     });
+//   } finally {
+//     session.endSession();
+//   }
+// };
+
+const placeOrder = async (req, res) => {
+  const order = await Order.create({
+    user: req.user._id,
+    items: req.body.items,
+    total: 0,
+  });
+
+  await flowProducer.add({
+    name: 'process-order',
+    queueName: 'order',
+    data: {
+      orderId: order._id.toString(),
+    },
+
+    children: [
+      {
+        name: 'send-email',
+        queueName: 'email',
+        data: {
+          orderId: order._id.toString(),
+        },
+        opts: {
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 3000,
+          },
+          failParentOnFailure: true,
+        },
+
+        children: [
+          {
+            name: 'charge-payment',
+            queueName: 'payment',
+            data: {
+              orderId: order._id.toString(),
+            },
+            opts: {
+              attempts: 3,
+              backoff: {
+                type: 'exponential',
+                delay: 3000,
+              },
+              failParentOnFailure: true,
+            },
+
+            children: [
+              {
+                name: 'validate-stock',
+                queueName: 'stock',
+                data: {
+                  orderId: order._id.toString(),
+                },
+                opts: {
+                  attempts: 3,
+                  backoff: {
+                    type: 'exponential',
+                    delay: 3000,
+                  },
+                  failParentOnFailure: true,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  // console.log(order);
+
+  emitToUserRoom(req.user._id.toString(), 'order:created', {
+   orderId: order._id.toString(),
+    message: "Your order has been created",
+    status: "processing",
+  });
+
+  res.status(202).json({
+    success: true,
+    message: 'Order created. Processing has started.',
+    orderId: order._id.toString(),
+  });
+};
+
+module.exports = placeOrder;
+ 
+
+
+import { useContext } from "react"
+import { userContext } from "../context/UserAuthContext"
+import { Elements } from "@stripe/react-stripe-js";
+import stripePromise from "../stripe";
+import CheckoutForm from "../components/CheckoutForm";
+
+
+const Checkout = () => {
+    const { clientSecret } = useContext(userContext);
+    console.log(clientSecret);
+    if (!clientSecret) {
+        return <h2>Loading payment...</h2>;
+    }
+    return (
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <CheckoutForm/>
+        </Elements>
+    )
+}
+
+export default Checkout
+  
+
+
+
+
+

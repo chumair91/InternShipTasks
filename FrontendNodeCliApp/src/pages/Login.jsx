@@ -12,9 +12,13 @@ const Login = () => {
 
     const [loginData, setLoginData] = useState({ email: '', password: '' });
     const [signupData, setSignupData] = useState({ name: '', email: '', password: '' });
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
     const loginSubmitHandler = async (e) => {
         e.preventDefault();
+        if (isLoggingIn) return;
+
+        setIsLoggingIn(true);
         try {
             const res = await api.post("/auth/login", loginData);
             // console.log(res);
@@ -25,7 +29,13 @@ const Login = () => {
             navigate("/");
         } catch (err) {
             console.error(err);
-            toast.error(err.response?.data?.message);
+            const retryAfter = err.response?.data?.retryAfter;
+            const fallbackMessage = err.response?.status === 429
+                ? "Too many login attempts. Please wait before trying again."
+                : "Login failed. Please try again.";
+            toast.error(retryAfter ? `${err.response?.data?.message}. Try again in ${retryAfter}.` : err.response?.data?.message || fallbackMessage);
+        } finally {
+            setIsLoggingIn(false);
         }
     };
 
@@ -91,8 +101,8 @@ const Login = () => {
                                 onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                                 required
                             />
-                            <button className="text-black bg-white border-none outline-none px-2 py-1.5 w-full rounded-full active:scale-95 transition-all duration-150">
-                                Login
+                            <button disabled={isLoggingIn} className="text-black bg-white border-none outline-none px-2 py-1.5 w-full rounded-full active:scale-95 transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100">
+                                {isLoggingIn ? "Logging in..." : "Login"}
                             </button>
                         </form>
 

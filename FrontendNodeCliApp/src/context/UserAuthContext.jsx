@@ -3,6 +3,8 @@ import { createContext, useEffect, useState } from 'react'
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import socket from '../socket';
+
 
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -16,6 +18,7 @@ const UserAuthProvider = ({ children }) => {
     const [cancelPlanLoading, setCancelPlanLoading] = useState(false);
     const [paymentHistory, setPaymentHistory] = useState(null);
     const [historyLoader, setHistoryLoader] = useState(false);
+
     const fetchUser = async () => {
         try {
             const token = localStorage.getItem("token");
@@ -27,6 +30,8 @@ const UserAuthProvider = ({ children }) => {
             }
 
             const res = await api.get('/auth/me');
+            console.log(res.data.data);
+            
             setUser(res.data.data);
         } catch (error) {
             console.log(error);
@@ -55,6 +60,80 @@ const UserAuthProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchUser();
     }, [])
+
+
+
+    useEffect(() => {
+        if (!user) {
+            if (socket.connected) socket.disconnect();
+            return;
+        }
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return;
+        }
+        socket.auth = { token };
+        if (!socket.connected) {
+            socket.connect();
+        }
+        const handleConnect = () => {
+            console.log("Socket connected:", socket.id);
+        };
+
+        const handleError = (error) => {
+            console.error("Socket connection error:", error.message);
+        };
+        const handleOrderEvent = (data) => {
+            toast.info(data.message)
+        }
+
+        socket.on("connect", handleConnect);
+        socket.on("connect_error", handleError);
+        socket.on('order:created', handleOrderEvent)
+        return () => {
+            socket.off("connect", handleConnect);
+            socket.off("connect_error", handleError);
+            socket.off('order:created', handleOrderEvent);
+        };
+    }, [user])
+
+    // useEffect(() => {
+    //     if (!user) {
+    //         return;
+    //     }
+    //     const token = localStorage.getItem('token');
+    //     if (!token) {
+    //         return;
+    //     }
+    //     const adminSocket = io(`${config.socketUrl}/admin`, {
+    //         autoConnect: false,
+    //         auth: {
+    //             token
+    //         }
+    //     })
+
+    //     // Explicitly connect so we can observe connect/connect_error events reliably
+    //     adminSocket.connect();
+
+    //     const handleConnect = () => {
+    //         console.log("Admin socket connected:", adminSocket.id);
+    //     }
+    //     const handleError = (error) => {
+    //         console.log('Admin socket connection error', error.message);
+    //         toast.error(error.message);
+    //     }
+    //     adminSocket.on('connect', handleConnect);
+    //     adminSocket.on('connect_error', handleError);
+    //     adminSocket.on('support:rooms', (rooms) => {
+    //         console.log('Active support rooms:', rooms);
+    //     });
+    //     return () => {
+    //         adminSocket.off("connect", handleConnect);
+    //         adminSocket.off("connect_error", handleError);
+    //         adminSocket.disconnect();
+    //     };
+
+    // }, [user])
 
     const register = async (formData) => {
         try {
